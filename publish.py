@@ -157,7 +157,6 @@ def consulCommand(script, con_key, flag='*'):
             print('#' * 50)
             res = simplejson.loads(cl.onoff('off', bid))
             if res.get('code') != 0:
-                #print(unicode(res.get('msg'), 'utf-8'))
                 sys.exit(res.get('code'))
             else:
                 print('{}:{} is down.'.format(ip,port))
@@ -166,20 +165,18 @@ def consulCommand(script, con_key, flag='*'):
             print('{}:{} is already down yet.'.format(ip,port))
             print('#' * 50)
         res = simplejson.loads(cl.remoteCommand(hostname, '{} {}'.format(scmd.get(s_t), script)))
-        if res.get('code', 0) != 0:
-	    print('Error: {} -- {}'.format(res.get('code'),res.get('msg')))
+        res_msg = res.get(hostname[0])
+        retcode = res_msg.get('retcode')
+        msg = res_msg.get('ret')
+        print('{}:{}\n{}'.format(ip, port, msg))
+        if retcode != 0:
+            print('Failed!!!')
+            sys.exit(retcode)
         else:
-	    for k, v in res.items():
-                print('Host {}:'.format(ip))
-                if v.get('retcode') != 0 :
-		    print('Error: {} -- {}'.format(v.get('retcode'),v.get('ret')))
-                else:
-                    print('Success: {}'.format(v.get('ret')))
-
+            print('Success.')
         if down == 1:
             res = simplejson.loads(cl.onoff('on', bid))
             if res.get('code') != 0:
-                #print(unicode(res.get('msg'), 'utf-8'))
                 sys.exit(res.get('code'))
             else:
                 print('{}:{} is online.'.format(ip,port))
@@ -221,15 +218,14 @@ def command(script, *ips):
                 continue
             hosts[h] = ip
     res = simplejson.loads(cl.remoteCommand(hosts.keys(), '{} {}'.format(scmd.get(s_t),script)))
-    if res.get('code', 0) != 0:
-	print('Error: {} -- {}'.format(res.get('code'),res.get('msg')))
-    else:
-	for k, v in res.items():
-            print('Host {}:'.format(hosts.get(k)))
-            if v.get('retcode') != 0 :
-		print('Error: {} -- {}'.format(v.get('retcode'),v.get('ret')))
-            else:
-                print('Success: {}'.format(v.get('ret')))
+    for k, v in res.items():
+        print('Host {}:'.format(hosts.get(k)))
+        print(v.get('ret'))
+        if v.get('retcode') != 0:
+            print('Failed!!!')
+            sys.exit(v.get('retcode'))
+        else:
+            print('Success!')
 
 if __name__ == '__main__':
     fire.Fire()
