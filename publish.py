@@ -5,6 +5,7 @@ from settings import CMDB
 from settings import IDC_TAG
 from consul import consul
 from getinfo import upstreams
+from tools import get_logger
 
 import sys
 import requests
@@ -14,6 +15,8 @@ import simplejson
 
 scmd = {'sh': '/bin/sh', 'py': '/usr/local/bin/python'}
 
+
+logger = get_logger('Jenkins publish', '/www/logs/', True)
 
 class switch(object):
 
@@ -71,10 +74,10 @@ def consulPublish(src, desc, con_key):
     if res.get('code') == 0:
         msg = res.get('msg')
         for k,v in msg.items():
-            print('HOST: {} upload SUCCESS ! - {}'.format(hosts.get(k),v))
-        print('{:.2f}% upload SUCCESS!'.format(float(len(msg)) / float(len(hosts)) * 100.0))
+            logger.info('HOST: {} upload SUCCESS ! - {}'.format(hosts.get(k),v))
+        logger.info('{:.2f}% upload SUCCESS!'.format(float(len(msg)) / float(len(hosts)) * 100.0))
     else:
-        print('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
+        logger.error('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
         sys.exit(res.get('code'))
     print('#' * 50)
 
@@ -159,30 +162,29 @@ def consulCommand(script, con_key, flag='*'):
             if res.get('code') != 0:
                 sys.exit(res.get('code'))
             else:
-                print('{}:{} is down.'.format(ip,port))
+                logger.info('{}:{} is down.'.format(ip,port))
                 down = 1
         else:
-            print('{}:{} is already down yet.'.format(ip,port))
+            logger.info('{}:{} is already down yet.'.format(ip,port))
             print('#' * 50)
         res = simplejson.loads(cl.remoteCommand(hostname, '{} {}'.format(scmd.get(s_t), script)))
         res_msg = res.get(hostname[0])
         retcode = res_msg.get('retcode')
         msg = res_msg.get('ret')
-        print('{}:{}\n{}'.format(ip, port, msg))
         if retcode != 0:
-            print('Failed!!!')
+            logger.error('{}:{} Filed!!! \n{}'.format(ip, port, msg))
             sys.exit(retcode)
         else:
-            print('Success.')
+            logger.info('{}:{} Success.\n{}'.format(ip, port, msg))
         if down == 1:
             res = simplejson.loads(cl.onoff('on', bid))
             if res.get('code') != 0:
                 sys.exit(res.get('code'))
             else:
-                print('{}:{} is online.'.format(ip,port))
+                logger.info('{}:{} is online.'.format(ip,port))
                 down = 0
         else:
-            print('{}:{} is already online.'.format(ip,port))
+            logger.info('{}:{} is already online.'.format(ip,port))
                 
     
 #################################################################
@@ -201,10 +203,10 @@ def publish(src, desc, *ips):
         msg = res.get('msg')
         print('#' * 50)
         for k,v in msg.items():
-            print('HOST: {} upload SUCCESS! - {}'.format(hosts.get(k),v))
-        print('{:.2f}% upload SUCCESS!'.format(float(len(msg)) / float(len(ips)) * 100.0))
+            logger.info('HOST: {} upload SUCCESS! - {}'.format(hosts.get(k),v))
+        logger.info('{:.2f}% upload SUCCESS!'.format(float(len(msg)) / float(len(ips)) * 100.0))
     else:
-        print('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
+        logger.error('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
         sys.exit(res.get('code'))
 
 def command(script, *ips):
@@ -218,15 +220,14 @@ def command(script, *ips):
                 continue
             hosts[h] = ip
     res = simplejson.loads(cl.remoteCommand(hosts.keys(), '{} {}'.format(scmd.get(s_t),script)))
-    for k, v in res.items():
-        print('Host {}:'.format(hosts.get(k)))
-        print(v.get('ret'))
-        if v.get('retcode') != 0:
-            print('Failed!!!')
-            sys.exit(v.get('retcode'))
-        else:
-            print('Success!')
-
+    res_msg = res.get(hostname[0])
+    retcode = res_msg.get('retcode')
+    msg = res_msg.get('ret')
+    if retcode != 0:
+        logger.error('{}:{} Filed!!! \n{}'.format(ip, port, msg))
+        sys.exit(retcode)
+    else:
+        logger.info('{}:{} Success.\n{}'.format(ip, port, msg))
 if __name__ == '__main__':
     fire.Fire()
 
