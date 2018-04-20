@@ -5,6 +5,7 @@ import logbook
 import sys
 import fire
 import os
+import re
 
 
 class switch(object):
