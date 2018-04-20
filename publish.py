@@ -5,7 +5,7 @@ from settings import CMDB
 from settings import IDC_TAG
 from consul import consul
 from getinfo import upstreams
-from tools import get_logger
+from tools import get_logger, switch
 
 import sys
 import requests
@@ -18,36 +18,6 @@ scmd = {'sh': '/bin/sh', 'py': '/usr/local/bin/python'}
 
 logger = get_logger('Jenkins publish', '/www/logs/', True)
 
-class switch(object):
-
-
-    def __init__(self, value, flag=0):
-        '''
-        re.S DOTALL
-        re.I IGNORECASE
-        re.L LOCALE
-        re.M MULTILINE
-        re.X VERBOSE
-        re.U
-        '''
-        self.value = value
-        self.fall = False
-        self.flag = flag
-
-    def __iter__(self):
-        """Return the match method once, then stop"""
-        yield self.match
-        raise StopIteration
-
-    def match(self, arg=''):
-        """Indicate whether or not to enter a case suite"""
-        if self.fall or not arg:
-            return True
-        elif re.search(arg, self.value, self.flag) is not None:
-            self.fall = True
-            return True
-        else:
-            return False
 
 def getHostname(ip):
     res = requests.get(CMDB+ip)
@@ -220,14 +190,15 @@ def command(script, *ips):
                 continue
             hosts[h] = ip
     res = simplejson.loads(cl.remoteCommand(hosts.keys(), '{} {}'.format(scmd.get(s_t),script)))
-    res_msg = res.get(hostname[0])
-    retcode = res_msg.get('retcode')
-    msg = res_msg.get('ret')
-    if retcode != 0:
-        logger.error('{}:{} Filed!!! \n{}'.format(ip, port, msg))
-        sys.exit(retcode)
-    else:
-        logger.info('{}:{} Success.\n{}'.format(ip, port, msg))
+    for hostname, msg in res.items():
+        ip = hosts.get(hostname)
+        retcode = msg.get('retcode')
+        ret = msg.get('ret')
+        if retcode != 0:
+            logger.error('{}:{} Filed!!! \n{}'.format(ip, hostname, ret))
+            sys.exit(retcode)
+        else:
+            logger.info('{}:{} Success.\n{}'.format(ip, hostname, ret))
 if __name__ == '__main__':
     fire.Fire()
 
