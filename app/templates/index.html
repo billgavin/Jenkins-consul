@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--{{ url_for('static', filename='res/sheeta.jpg') }}-->
+<script src="https://cdn.bootcss.com/angular.js/1.6.3/angular.min.js"></script>
+<title>{{title}}</title>
+</head>
+<body>
+    <div ng-app="consulApp" ng-controller="myCtrl">
+        <table ng-repeat="(key, items) in clusters">
+            <tr ng-repeat="x in items">
+                <td rowspan="0">{{key}}</td>
+                <td rowspan="0">{{x.idc}}</td>
+                <td>{{x.ip}}:{{ip.port}}</td>
+                <td>{{x.down}}</td>
+                <td></td>
+            </tr>
+        </table>
+    </div>
+    <script>
+    var app = angular.module('consulApp', []);
+    app.controller("myCtrl", funticon($scope, $http) {
+        $http.get('/index').then(function(response) {
+            $scope.clusters = response.data.records;
+        });
+    });
+    </script>
+</body>
+</html>
