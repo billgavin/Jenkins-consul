@@ -138,7 +138,7 @@ def consulCommand(script, con_key, flag='*'):
             logger.info('{}:{} is already down yet.'.format(ip,port))
             print('#' * 50)
         res = simplejson.loads(cl.remoteCommand(hostname, '{} {}'.format(scmd.get(s_t), script)))
-        res_msg = res.get(hostname[0])
+        res_msg = res.get(ip)
         retcode = res_msg.get('retcode')
         msg = res_msg.get('ret')
         if retcode != 0:
