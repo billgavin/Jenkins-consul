@@ -3,6 +3,7 @@
 
 from settings import CMDB
 from settings import IDC_TAG
+from settings import SALT_CHECK
 from consul import consul
 from getinfo import upstreams
 from tools import get_logger, switch
@@ -25,7 +26,13 @@ def getHostname(ip):
     hostnames = []
     for h in hosts:
         hname = h.get('hostname')
-        hostnames.append(hname)
+        res = requests.get(SALT_CHECK, params={'key': hname})
+        flag = eval(res.content)
+        if flag:   
+            hostnames.append(hname)
+        else:
+            logger.error('{} salt agnet connetion error!'.format(ip))
+            sys.exit(3)
     return hostnames
 
 def consulPublish(src, desc, con_key):
@@ -138,7 +145,7 @@ def consulCommand(script, con_key, flag='*'):
             logger.info('{}:{} is already down yet.'.format(ip,port))
             print('#' * 50)
         res = simplejson.loads(cl.remoteCommand(hostname, '{} {}'.format(scmd.get(s_t), script)))
-        res_msg = res.get(ip)
+        res_msg = res.get(hostname[0])
         retcode = res_msg.get('retcode')
         msg = res_msg.get('ret')
         if retcode != 0:
@@ -169,6 +176,7 @@ def publish(src, desc, *ips):
                 continue
             hosts[h] = ip
     res = simplejson.loads(cl.upload(hosts.keys(), src, desc))
+    print(res)
     if res.get('code') == 0:
         msg = res.get('msg')
         print('#' * 50)
