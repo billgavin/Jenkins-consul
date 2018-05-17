@@ -26,6 +26,8 @@ def getHostname(ip):
     hostnames = []
     for h in hosts:
         hname = h.get('hostname')
+        if IDC_TAG not in hname:
+            continue
         res = requests.get(SALT_CHECK, params={'key': hname})
         flag = eval(res.content)
         if flag:   
@@ -46,6 +48,7 @@ def consulPublish(src, desc, con_key):
             if idc not in h:
                 continue
             hosts[h] = ip
+    print(hosts)
     print('#' * 50)
     res = simplejson.loads(cl.upload(hosts.keys(), src, desc))
     if res.get('code') == 0:
@@ -172,8 +175,6 @@ def publish(src, desc, *ips):
     for ip in ips:
         hnames = getHostname(ip)
         for h in hnames:
-            if IDC_TAG not in h:
-                continue
             hosts[h] = ip
     res = simplejson.loads(cl.upload(hosts.keys(), src, desc))
     print(res)
@@ -194,10 +195,9 @@ def command(script, *ips):
     for ip in ips:
         hnames = getHostname(ip)
         for h in hnames:
-            if IDC_TAG not in h:
-                continue
             hosts[h] = ip
     res = simplejson.loads(cl.remoteCommand(hosts.keys(), '{} {}'.format(scmd.get(s_t),script)))
+    print(res)
     for hostname, msg in res.items():
         ip = hosts.get(hostname)
         retcode = msg.get('retcode')
