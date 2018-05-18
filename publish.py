@@ -23,9 +23,13 @@ logger = get_logger('Jenkins publish', '/www/logs/', True)
 def getHostname(ip):
     res = requests.get(CMDB+ip)
     hosts = res.json()
+    if not hosts:
+        logger.error('%s: cant find the host.' % ip)
+        sys.exit(4)
     hostnames = []
     for h in hosts:
         hname = h.get('hostname')
+        email = h.get('email')
         if IDC_TAG not in hname:
             continue
         res = requests.get(SALT_CHECK, params={'key': hname})
@@ -33,7 +37,7 @@ def getHostname(ip):
         if flag:   
             hostnames.append(hname)
         else:
-            logger.error('{} salt agnet connetion error!'.format(ip))
+            logger.error('{} salt agnet connetion error, send the message to {}'.format(ip, email))
             sys.exit(3)
     return hostnames
 
@@ -58,6 +62,7 @@ def consulPublish(src, desc, con_key):
         logger.info('{:.2f}% upload SUCCESS!'.format(float(len(msg)) / float(len(hosts)) * 100.0))
     else:
         logger.error('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
+        print('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
         sys.exit(res.get('code'))
     print('#' * 50)
 
@@ -153,6 +158,7 @@ def consulCommand(script, con_key, flag='*'):
         msg = res_msg.get('ret')
         if retcode != 0:
             logger.error('{}:{} Filed!!! \n{}'.format(ip, port, msg))
+            print('{}:{} Filed!!! \n{}'.format(ip, port, msg))
             sys.exit(retcode)
         else:
             logger.info('{}:{} Success.\n{}'.format(ip, port, msg))
@@ -186,6 +192,7 @@ def publish(src, desc, *ips):
         logger.info('{:.2f}% upload SUCCESS!'.format(float(len(msg)) / float(len(ips)) * 100.0))
     else:
         logger.error('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
+        print('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
         sys.exit(res.get('code'))
 
 def command(script, *ips):
@@ -204,6 +211,7 @@ def command(script, *ips):
         ret = msg.get('ret')
         if retcode != 0:
             logger.error('{}:{} Filed!!! \n{}'.format(ip, hostname, ret))
+            print('{}:{} Filed!!! \n{}'.format(ip, hostname, ret))
             sys.exit(retcode)
         else:
             logger.info('{}:{} Success.\n{}'.format(ip, hostname, ret))
