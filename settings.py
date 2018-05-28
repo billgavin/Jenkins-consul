@@ -1,5 +1,5 @@
 from tools import get_local_ip
-ifname = 'eth1'
+ifname = 'eth0'
 hostname, ip = get_local_ip(ifname)
 TOKEN_APP = 'ccs'
 TOKEN_KEY = 'fang.com'
