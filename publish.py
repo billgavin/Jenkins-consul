@@ -9,6 +9,7 @@ from getinfo import upstreams
 from tools import get_logger, switch
 
 import sys
+import os
 import requests
 import re
 import fire
@@ -42,6 +43,8 @@ def getHostname(ip):
     return hostnames
 
 def consulPublish(src, desc, con_key):
+    filepath = '/opt/local/jenkins/workspace' + src
+    assert os.path.exists(filepath), 'File: "%s" is not exists!' % filepath
     cl = consul()
     cluster = upstreams.get(con_key)
     hosts = {}
@@ -176,6 +179,8 @@ def consulCommand(script, con_key, flag='*'):
 #################################################################
 
 def publish(src, desc, *ips):
+    filepath = '/opt/local/jenkins/workspace' + src
+    assert os.path.exists(filepath), 'File: "%s" is not exists!' % filepath
     hosts = {}
     cl = consul()
     for ip in ips:
