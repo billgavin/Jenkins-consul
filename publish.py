@@ -38,8 +38,9 @@ def getHostname(ip):
         if flag:   
             hostnames.append(hname)
         else:
-            logger.error('{} salt agnet connetion error, send the message to {}'.format(ip, email))
+            logger.error('{} salt agnet connection error, send the message to {}'.format(ip, email))
             sys.exit(3)
+    print(hostnames)
     return hostnames
 
 def consulPublish(src, desc, con_key):
@@ -63,8 +64,8 @@ def consulPublish(src, desc, con_key):
             logger.info('HOST: {} upload SUCCESS ! - {}'.format(hosts.get(k),v))
         logger.info('{:.2f}% upload SUCCESS!'.format(float(len(msg)) / float(len(hosts)) * 100.0))
     else:
-        logger.error('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
-        print('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
+        logger.error('FAILED!!! - {} {}'.format(res.get('code'), res.get('msg')))
+        print('FAILED!!! - {} {}'.format(res.get('code'), res.get('msg')))
         sys.exit(res.get('code'))
     print('#' * 50)
 
@@ -159,8 +160,8 @@ def consulCommand(script, con_key, flag='*'):
         retcode = res_msg.get('retcode')
         msg = res_msg.get('ret')
         if retcode != 0:
-            logger.error('{}:{} Filed!!! \n{}'.format(ip, port, msg))
-            print('{}:{} Filed!!! \n{}'.format(ip, port, msg))
+            logger.error('{}:{} Failed!!! \n{}'.format(ip, port, msg))
+            print('{}:{} Failed!!! \n{}'.format(ip, port, msg))
             sys.exit(retcode)
         else:
             logger.info('{}:{} Success.\n{}'.format(ip, port, msg))
@@ -195,8 +196,8 @@ def publish(src, desc, *ips):
             logger.info('HOST: {} upload SUCCESS! - {}'.format(hosts.get(k),v))
         logger.info('{:.2f}% upload SUCCESS!'.format(float(len(msg)) / float(len(ips)) * 100.0))
     else:
-        logger.error('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
-        print('FAILD!!! - {} {}'.format(res.get('code'), res.get('msg')))
+        logger.error('FAILED!!! - {} {}'.format(res.get('code'), res.get('msg')))
+        print('FAILED!!! - {} {}'.format(res.get('code'), res.get('msg')))
         sys.exit(res.get('code'))
 
 def command(script, *ips):
@@ -207,6 +208,7 @@ def command(script, *ips):
         hnames = getHostname(ip)
         for h in hnames:
             hosts[h] = ip
+    print(hosts)
     res = simplejson.loads(cl.remoteCommand(hosts.keys(), '{} {}'.format(scmd.get(s_t),script)))
     if not res:
         logger.error(res)
@@ -216,8 +218,8 @@ def command(script, *ips):
         retcode = msg.get('retcode')
         ret = msg.get('ret')
         if retcode != 0:
-            logger.error('{}:{} Filed!!! \n{}'.format(ip, hostname, ret))
-            print('{}:{} Filed!!! \n{}'.format(ip, hostname, ret))
+            logger.error('{}:{} Failed!!! \n{}'.format(ip, hostname, ret))
+            print('{}:{} Failed!!! \n{}'.format(ip, hostname, ret))
             sys.exit(retcode)
         else:
             logger.info('{}:{} Success.\n{}'.format(ip, hostname, ret))
