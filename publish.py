@@ -43,8 +43,8 @@ def getHostname(ip):
     return hostnames
 
 def consulPublish(src, desc, con_key):
-    filepath = '/opt/local/jenkins/workspace' + src
-    assert os.path.exists(filepath), 'File: "%s" is not exists!' % filepath
+    #filepath = '/opt/local/jenkins/workspace' + src
+    #assert os.path.exists(filepath), 'File: "%s" is not exists!' % filepath
     cl = consul()
     cluster = upstreams.get(con_key)
     hosts = {}
@@ -55,7 +55,6 @@ def consulPublish(src, desc, con_key):
             if idc not in h:
                 continue
             hosts[h] = ip
-    print(hosts)
     print('#' * 50)
     res = simplejson.loads(cl.upload(hosts.keys(), src, desc))
     if res.get('code') == 0:
@@ -179,8 +178,8 @@ def consulCommand(script, con_key, flag='*'):
 #################################################################
 
 def publish(src, desc, *ips):
-    filepath = '/opt/local/jenkins/workspace' + src
-    assert os.path.exists(filepath), 'File: "%s" is not exists!' % filepath
+    #filepath = '/opt/local/jenkins/workspace' + src
+    #assert os.path.exists(filepath), 'File: "%s" is not exists!' % filepath
     hosts = {}
     cl = consul()
     for ip in ips:
@@ -209,7 +208,9 @@ def command(script, *ips):
         for h in hnames:
             hosts[h] = ip
     res = simplejson.loads(cl.remoteCommand(hosts.keys(), '{} {}'.format(scmd.get(s_t),script)))
-    print(res)
+    if not res:
+        logger.error(res)
+        sys.exit(5)
     for hostname, msg in res.items():
         ip = hosts.get(hostname)
         retcode = msg.get('retcode')
