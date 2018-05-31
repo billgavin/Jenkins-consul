@@ -213,16 +213,16 @@ def command(script, *ips):
     if not res:
         logger.error(res)
         sys.exit(5)
-    for hostname, msg in res.items():
-        ip = hosts.get(hostname)
+    for h, msg in res.items():
+        ip = hosts.get(h)
         retcode = msg.get('retcode')
         ret = msg.get('ret')
         if retcode != 0:
-            logger.error('{}:{} Failed!!! \n{}'.format(ip, hostname, ret))
-            print('{}:{} Failed!!! \n{}'.format(ip, hostname, ret))
+            logger.error('{}:{} Failed!!! \n{}'.format(ip, h, ret))
+            print('{}:{} Failed!!! \n{}'.format(ip, h, ret))
             sys.exit(retcode)
         else:
-            logger.info('{}:{} Success.\n{}'.format(ip, hostname, ret))
+            logger.info('{}:{} Success.\n{}'.format(ip, h, ret))
 if __name__ == '__main__':
     fire.Fire()
 
