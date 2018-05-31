@@ -58,6 +58,7 @@ def consulPublish(src, desc, con_key):
             hosts[h] = ip
     print('#' * 50)
     res = simplejson.loads(cl.upload(hosts.keys(), src, desc))
+    print(res)
     if res.get('code') == 0:
         msg = res.get('msg')
         for k,v in msg.items():
@@ -147,6 +148,7 @@ def consulCommand(script, con_key, flag='*'):
         if down == 0:
             print('#' * 50)
             res = simplejson.loads(cl.onoff('off', bid))
+            print(res)
             if res.get('code') != 0:
                 sys.exit(res.get('code'))
             else:
@@ -156,6 +158,7 @@ def consulCommand(script, con_key, flag='*'):
             logger.info('{}:{} is already down yet.'.format(ip,port))
             print('#' * 50)
         res = simplejson.loads(cl.remoteCommand(hostname, '{} {}'.format(scmd.get(s_t), script)))
+        print(res)
         res_msg = res.get(hostname[0])
         retcode = res_msg.get('retcode')
         msg = res_msg.get('ret')
@@ -208,8 +211,8 @@ def command(script, *ips):
         hnames = getHostname(ip)
         for h in hnames:
             hosts[h] = ip
-    print(hosts)
     res = simplejson.loads(cl.remoteCommand(hosts.keys(), '{} {}'.format(scmd.get(s_t),script)))
+    print(res)
     if not res:
         logger.error(res)
         sys.exit(5)
