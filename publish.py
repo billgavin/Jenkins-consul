@@ -5,7 +5,7 @@ from settings import CMDB
 from settings import IDC_TAG
 from settings import SALT_CHECK
 from consul import consul
-from getinfo import upstreams
+#from getinfo import upstreams
 from tools import get_logger, switch
 
 import sys
@@ -234,19 +234,24 @@ def k8s_deploy(deployment, image, env):
         kubectl set image  deployments/{ebcenter-test} {ebcenter-test}={dockerhub.3g.fang.com/ebcenter/ebcenter_app_v321:v321}  -n {test-env}
         salt  xg-o-k8sm1v  cmd.run
     '''
+    cl = consul()
     command = 'kubectl set image deployments/{a} {a}={b} -n {c}'.format(a=deployment, b=image, c=env)
     print(command)
-    sh_file = '/k8s_deploy/{}-{}.sh'.format(deplyment, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()))
+    sh_file = '/k8s_deploy/{}-{}.sh'.format(deployment, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()))
     with open('/opt/local/jenkins/workspace' + sh_file, 'w') as f:
         f.write(command)
-    res = simplejson.loads(cl.upload(['xg-o-k8sm1v'], sh_file, '/tmp/' + sh_file))
+    res = simplejson.loads(cl.upload(['xg-o-k8sm1v'], sh_file, '/tmp' + sh_file))
+    print('upload')
+    print(res)
     if res.get('code') == 0:
         msg = res.get('msg')
-        cmd_res = simplejson.loads(cl.remoteCommand(['xg-o-k8sm1v'], '/tmp/' + sh_file))
-        if not res:
+        cmd_res = simplejson.loads(cl.remoteCommand(['xg-o-k8sm1v'], '/tmp' + sh_file))
+        print('command')
+        print(cmd_res)
+        if not cmd_res:
             logger.error(res)
             sys.exit(5)
-        for h, msg in res.items():
+        for h, msg in cmd_res.items():
             retcode = msg.get('retcode')
             ret = msg.get('ret')
             if retcode != 0:
