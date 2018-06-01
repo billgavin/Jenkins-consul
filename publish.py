@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/bin/python
 # encoding; utf-8
 
 from settings import CMDB
@@ -14,6 +14,7 @@ import requests
 import re
 import fire
 import simplejson
+import time
 
 scmd = {'sh': '/bin/sh', 'py': '/usr/local/bin/python'}
 
@@ -226,6 +227,39 @@ def command(script, *ips):
             sys.exit(retcode)
         else:
             logger.info('{}:{} Success.\n{}'.format(ip, h, ret))
+
+
+def k8s_deploy(deployment, image, env):
+    '''
+        kubectl set image  deployments/{ebcenter-test} {ebcenter-test}={dockerhub.3g.fang.com/ebcenter/ebcenter_app_v321:v321}  -n {test-env}
+        salt  xg-o-k8sm1v  cmd.run
+    '''
+    command = 'kubectl set image deployments/{a} {a}={b} -n {c}'.format(a=deployment, b=image, c=env)
+    print(command)
+    sh_file = '/k8s_deploy/{}-{}.sh'.format(deplyment, time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()))
+    with open('/opt/local/jenkins/workspace' + sh_file, 'w') as f:
+        f.write(command)
+    res = simplejson.loads(cl.upload(['xg-o-k8sm1v'], sh_file, '/tmp/' + sh_file))
+    if res.get('code') == 0:
+        msg = res.get('msg')
+        cmd_res = simplejson.loads(cl.remoteCommand(['xg-o-k8sm1v'], '/tmp/' + sh_file))
+        if not res:
+            logger.error(res)
+            sys.exit(5)
+        for h, msg in res.items():
+            retcode = msg.get('retcode')
+            ret = msg.get('ret')
+            if retcode != 0:
+                logger.error('{} Failed!!! \n{}'.format('xg-o-k8sm1v', ret))
+                print('{} Failed!!! \n{}'.format('xg-o-k8sm1v', ret))
+                sys.exit(retcode)
+            else:
+                logger.info('{} Success.\n{}'.format('xg-o-k8sm1v', ret))
+    else:
+        logger.error('FAILED!!! - {} {}'.format(res.get('code'), res.get('msg')))
+        sys.exit(res.get('code'))
+    
+
 if __name__ == '__main__':
     fire.Fire()
 
