@@ -2,47 +2,89 @@
 
 from settings import CMDB
 from consul import consul
+from tools import dump_disk
 
 import simplejson
 import sys
 
-cl = consul()
 
-business = simplejson.loads(cl.getInfo('business')).get('msg')
-idcs = {}
-for bs in business:
-    tag = bs.get('tag')
-    bid = bs.get('id')
-    idcid = bs.get('idc')
-    res = simplejson.loads(cl.getInfo('idc', str(idcid))).get('msg')
-    idc = res.get('tag')
-    idcname = res.get('idc')
-    idcs[tag] = idc
+def get_idcs():
+    idcnames = {}
+    idcs = simplejson.loads(cl.getInfo('idc')).get('msg')
+    for idc in idcs:
+        idc_tag = idc.get('tag')
+        idc_id = idc.get('id')
+        idcnames[idc_id] = idc_tag
 
-backends = simplejson.loads(cl.getInfo('backend')).get('msg')
-upstreams = {}
-for bs in backends:
-    upstream_id = bs.get('upstream')
-    upstream = simplejson.loads(cl.getInfo('upstream',str(upstream_id)))
-    if upstream.get('code') != 0:
-        continue
-    upstream = upstream.get('msg')
-    cluster = upstream.get('cluster')
-    parent = upstream.get('parent')
-    stat = upstream.get('stat')
-    cid = upstream.get('id')
-    con_key = '{}/{}'.format(parent, cluster)
-    ipp = bs.get('ip').split(':')
-    us = upstreams.get(con_key, [])
-    info = {}
-    info['backend_id'] = bs.get('id')
-    info['ip'] = ipp[0]
-    info['port'] = ipp[1]
-    info['down'] = bs.get('down')
-    info['lock'] = bs.get('lock')
-    info['idc'] = idcs.get(parent)
-    us.append(info)
-    upstreams[con_key] = us
+    business = simplejson.loads(cl.getInfo('business')).get('msg')
+    idcs = {}
+    for bs in business:
+        tag = bs.get('tag')
+        idc = bs.get('idc')
+        idc_tag = idcnames.get(idc)
+        idcs[tag] = idc_tag
+    return idcs
+
+def get_upstreams():
+    clusters = {}
+    res = simplejson.loads(cl.getInfo('upstream')).get('msg')
+    for upstream in res:
+        stat = upstream.get('stat')
+        if not stat:
+            continue
+        cluster = upstream.get('cluster')
+        parent = upstream.get('parent')
+        cid = upstream.get('id')
+        con_key = '{}/{}'.format(parent, cluster)
+        info = clusters.get(cid, {})
+        info = {
+            'consul': con_key,
+            'idc': idcs.get(parent)
+        }
+        clusters[cid] = info
+
+    upstreams = {}
+    backends = simplejson.loads(cl.getInfo('backend')).get('msg')
+    for bs in backends:
+        uid = bs.get('upstream')
+        info = clusters.get(uid)
+        conkey = info.get('consul')
+        idc = info.get('idc')
+        ip, port = bs.get('ip').split(':')
+        bid = bs.get('id')
+        down = bs.get('down')
+        lock = bs.get('lock')
+        us = upstreams.get(conkey, [])
+        us.append({
+            'backend_id': bid,
+            'ip': ip,
+            'port': port,
+            'down': down,
+            'lock': lock,
+            'idc': idc
+        })
+        upstreams[conkey] = us
+    return upstreams
+
+def main():
+    cl = consul()
+
+    idcf = 'pickle/idcs.pkl'
+    idcc = dump_disk(idcf)
+    idcs = idcc.get()
+    if not idcs:
+        idcs = get_idcs()
+        idcc.set(idcs)
+
+    usf = 'pickle/upstreams.pkl'
+    usc = dump_disk(usf)
+    upstreams = usc.get()
+    if not upstreams:
+        upstreams = get_upstreams()
+        usc.set(upstreams)
+
+    return idcs, upstreams
 
 if __name__ == '__main__':
+    idcs, upstreams = main()
     print(simplejson.dumps(eval(sys.argv[1])))

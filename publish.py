@@ -5,9 +5,9 @@ from settings import CMDB
 from settings import IDC_TAG
 from settings import SALT_CHECK
 from consul import consul
-from getinfo import upstreams
 from tools import get_logger, switch
 
+import getinfo
 import sys
 import os
 import requests
@@ -19,6 +19,8 @@ scmd = {'sh': '/bin/sh', 'py': '/usr/local/bin/python'}
 
 
 logger = get_logger('Jenkins publish', '/www/logs/', True)
+
+_, upstreams = getinfo.main()
 
 
 def getHostname(ip):
