@@ -6,6 +6,8 @@ import sys
 import fire
 import os
 import re
+import time
+import pickle
 
 
 class switch(object):
@@ -38,6 +40,25 @@ class switch(object):
             return True
         else:
             return False
+
+class dump_disk:
+
+    def __init__(self, dump_file, timeout=60*60*24):
+        self.dump_file = os.path.join(os.path.dirname(__file__), dump_file)
+        self.timeout = timeout
+
+    def set(self,obj):
+        with open(self.dump_file, 'wb') as f:
+            pickle.dump(obj, f)
+
+    def get(self):
+        if not os.path.exists(self.dump_file):
+            return None
+        mtime = os.path.getmtime(self.dump_file)
+        if (time.time() - mtime) >= self.timeout:
+            return None
+        with open(self.dump_file, 'rb') as f:
+            return pickle.load(f)
 
 def get_logger(name='LOGBOOK', log_path='', file_log=False):
 	logbook.set_datetime_format('local')
