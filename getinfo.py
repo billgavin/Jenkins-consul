@@ -9,6 +9,7 @@ import sys
 
 
 def get_idcs():
+    cl = consul()
     idcnames = {}
     idcs = simplejson.loads(cl.getInfo('idc')).get('msg')
     for idc in idcs:
@@ -26,7 +27,9 @@ def get_idcs():
     return idcs
 
 def get_upstreams():
+    cl = consul()
     clusters = {}
+    idcs = get_idcs()
     res = simplejson.loads(cl.getInfo('upstream')).get('msg')
     for upstream in res:
         stat = upstream.get('stat')
@@ -67,7 +70,6 @@ def get_upstreams():
     return upstreams
 
 def main():
-    cl = consul()
 
     idcf = 'pickle/idcs.pkl'
     idcc = dump_disk(idcf)
