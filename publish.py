@@ -76,6 +76,8 @@ def consulPublish(src, desc, con_key):
     print('#' * 50)
 
 def gethosts(con_key, flag):
+    os.remove('/opt/local/pickle/upstreams.pkl')
+    _, upstreams = getinfo.main()
     cluster = upstreams.get(con_key)
     hosts = []
     for bk in cluster:
@@ -153,7 +155,6 @@ def consulCommand(script, con_key, flag='*'):
         if down == 0:
             print('#' * 50)
             res = simplejson.loads(cl.onoff('off', bid))
-            print(res)
             if res.get('code') != 0:
                 sys.exit(res.get('code'))
             else:
@@ -169,12 +170,12 @@ def consulCommand(script, con_key, flag='*'):
         msg = res_msg.get('ret')
         if retcode != 0:
             logger.error('{}:{} Failed!!! \n{}'.format(ip, port, msg))
-            #print('{}:{} Failed!!! \n{}'.format(ip, port, msg))
+            print('{}:{} Failed!!! \n{}'.format(ip, port, msg))
             sys.exit(retcode)
         else:
             if 'shell_exit_with_error_code' in msg:
                 logger.error('{}:{} Failed!!! \n{}'.format(ip, port, msg))
-                #print('{}:{} Failed!!! \n{}'.format(ip, port, msg))
+                print('{}:{} Failed!!! \n{}'.format(ip, port, msg))
                 sys.exit(100)
             else:
                 logger.info('{}:{} Success.\n{}'.format(ip, port, msg))
