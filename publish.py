@@ -163,16 +163,21 @@ def consulCommand(script, con_key, flag='*'):
             logger.info('{}:{} is already down yet.'.format(ip,port))
             print('#' * 50)
         res = simplejson.loads(cl.remoteCommand(hostname, '{} {}'.format(scmd.get(s_t), script)))
-        print(res)
+        #print(res)
         res_msg = res.get(hostname[0])
         retcode = res_msg.get('retcode')
         msg = res_msg.get('ret')
         if retcode != 0:
             logger.error('{}:{} Failed!!! \n{}'.format(ip, port, msg))
-            print('{}:{} Failed!!! \n{}'.format(ip, port, msg))
+            #print('{}:{} Failed!!! \n{}'.format(ip, port, msg))
             sys.exit(retcode)
         else:
-            logger.info('{}:{} Success.\n{}'.format(ip, port, msg))
+            if 'shell_exit_with_error_code' in msg:
+                logger.error('{}:{} Failed!!! \n{}'.format(ip, port, msg))
+                #print('{}:{} Failed!!! \n{}'.format(ip, port, msg))
+                sys.exit(100)
+            else:
+                logger.info('{}:{} Success.\n{}'.format(ip, port, msg))
         if down == 1:
             res = simplejson.loads(cl.onoff('on', bid))
             if res.get('code') != 0:
