@@ -87,6 +87,15 @@ def gethosts(con_key, flag):
         lock = bk.get('lock')
         down = bk.get('down')
         bid = bk.get('backend_id')
+        if down == 1 and lock:
+            res = simplejson.loads(cl.onoff('on', bid))
+            if res.get('code') != 0:
+                logger.error('{}:{} get on failed, {}',format(ip, port, res.get('msg')))
+                sys.exit(res.get('code'))
+            else:
+                logger.info('{}:{} is online.'.format(ip,port))
+                down = 0
+                lock = False
         for case in switch(flag):
             if case(r'(((1[0-9][0-9])|(2[0-4][0-9])|(25[0-5])|([1-9][0-9])|([0-9]))\.){3}((1[0-9][0-9])|(2[0-4][0-9])|(25[0-5])|([1-9][0-9])|([0-9])):\d{2,5}'):
                 if flag == '{}:{}'.format(ip, port):
