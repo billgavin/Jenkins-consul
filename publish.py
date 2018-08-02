@@ -79,6 +79,7 @@ def gethosts(con_key, flag):
     os.remove('/opt/local/pickle/upstreams.pkl')
     _, upstreams = getinfo.main()
     cluster = upstreams.get(con_key)
+    cl = consul()
     hosts = []
     for bk in cluster:
         idc = bk.get('idc')
@@ -87,6 +88,7 @@ def gethosts(con_key, flag):
         lock = bk.get('lock')
         down = bk.get('down')
         bid = bk.get('backend_id')
+        # 判断 机器状态，将锁定机器自动解锁
         if down == 1 and lock:
             res = simplejson.loads(cl.onoff('on', bid))
             if res.get('code') != 0:
